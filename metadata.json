@@ -1,0 +1,6 @@
+{
+  "name": "JSON Reader & Visualizer",
+  "description": "Efficient JSON viewer with syntax highlighting, expandable tree, search filtering, and interactive visual node graph visualization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
