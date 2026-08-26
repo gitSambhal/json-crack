@@ -23,6 +23,7 @@ import {
   sortJsonData,
   SortMode,
   getPathValue,
+  parseAnyInputToJson,
 } from './utils/jsonParser';
 import { downloadFile, jsonToCsv } from './utils/export';
 
@@ -195,22 +196,31 @@ export default function App() {
       const reader = new FileReader();
       reader.onload = (event) => {
         const content = event.target?.result as string;
-        try {
-          const data = JSON.parse(content);
+        const parsed = parseAnyInputToJson(content, file.name);
+
+        if (parsed.data && !parsed.error) {
+          const formattedContent = parsed.format === 'csv'
+            ? JSON.stringify(parsed.data, null, 2)
+            : content;
+          const byteSize = new Blob([formattedContent]).size;
+          const cleanName = file.name.endsWith('.csv')
+            ? `${file.name.replace(/\.csv$/i, '')}.json`
+            : file.name;
+
           const newFile: ParsedFile = {
             id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-            name: file.name,
-            byteSize: file.size,
-            sizeFormatted: formatByteSize(file.size),
-            content,
-            data,
+            name: cleanName,
+            byteSize,
+            sizeFormatted: formatByteSize(byteSize),
+            content: formattedContent,
+            data: parsed.data,
             isValid: true,
             error: null,
             lastModified: file.lastModified,
             isPreset: false,
           };
           newParsedFiles.push(newFile);
-        } catch (err: any) {
+        } else {
           const invalidFile: ParsedFile = {
             id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
             name: file.name,
@@ -219,7 +229,7 @@ export default function App() {
             content,
             data: null,
             isValid: false,
-            error: err.message,
+            error: parsed.error || 'Invalid file format',
             lastModified: file.lastModified,
             isPreset: false,
           };

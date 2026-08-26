@@ -135,10 +135,16 @@ export const FetchUrlModal: React.FC<FetchUrlModalProps> = ({
                 JSONPlaceholder Users
               </button>
               <button
-                onClick={() => setUrl('https://dummyjson.com/products/1')}
-                className="px-2 py-1 bg-[#1C1C1F] hover:bg-[#2A2A2E] text-gray-300 rounded text-[10px] border border-[#2A2A2E]"
+                onClick={() => setUrl('https://api.tvmaze.com/shows/2993?embed=episodes')}
+                className="px-2 py-1 bg-[#1C1C1F] hover:bg-[#2A2A2E] text-red-400 rounded text-[10px] border border-red-500/30"
               >
-                DummyJSON Product
+                Stranger Things TV API
+              </button>
+              <button
+                onClick={() => setUrl('https://api.tvmaze.com/shows/43687?embed=cast')}
+                className="px-2 py-1 bg-[#1C1C1F] hover:bg-[#2A2A2E] text-pink-400 rounded text-[10px] border border-pink-500/30"
+              >
+                Squid Game TV API
               </button>
             </div>
           </div>

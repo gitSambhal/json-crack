@@ -163,6 +163,142 @@ export function searchJson(data: any, filter: SearchFilterState): SearchResult[]
 }
 
 /**
+ * Parses CSV/TSV format into JSON objects (e.g. NetflixViewingHistory.csv)
+ */
+export function parseCsvToJson(csvText: string): any[] | null {
+  const clean = csvText.replace(/^\uFEFF/, '').trim();
+  if (!clean) return null;
+  const lines = clean.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  if (lines.length < 2) return null;
+
+  // Detect delimiter
+  const firstLine = lines[0];
+  let delimiter = ',';
+  if (firstLine.includes('\t') && firstLine.split('\t').length > firstLine.split(',').length) {
+    delimiter = '\t';
+  } else if (firstLine.includes(';') && firstLine.split(';').length > firstLine.split(',').length) {
+    delimiter = ';';
+  }
+
+  const parseRow = (rowStr: string): string[] => {
+    const res: string[] = [];
+    let curr = '';
+    let inQuotes = false;
+    for (let i = 0; i < rowStr.length; i++) {
+      const char = rowStr[i];
+      if (char === '"' || char === "'") {
+        if (inQuotes && rowStr[i + 1] === char) {
+          curr += char;
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === delimiter && !inQuotes) {
+        res.push(curr.trim());
+        curr = '';
+      } else {
+        curr += char;
+      }
+    }
+    res.push(curr.trim());
+    return res;
+  };
+
+  const headers = parseRow(lines[0]).map((h) => h.replace(/^["']|["']$/g, '').trim());
+  if (headers.length === 0 || headers.every((h) => !h)) return null;
+
+  const results: any[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseRow(lines[i]).map((v) => v.replace(/^["']|["']$/g, '').trim());
+    if (values.length === 0 || (values.length === 1 && !values[0])) continue;
+    const item: Record<string, any> = {};
+    headers.forEach((h, idx) => {
+      const key = h || `field_${idx + 1}`;
+      const val = values[idx] !== undefined ? values[idx] : '';
+      if (val.toLowerCase() === 'true') item[key] = true;
+      else if (val.toLowerCase() === 'false') item[key] = false;
+      else if (val !== '' && !isNaN(Number(val)) && !val.includes('-') && !val.includes('/')) {
+        item[key] = Number(val);
+      } else {
+        item[key] = val;
+      }
+    });
+    results.push(item);
+  }
+
+  return results.length > 0 ? results : null;
+}
+
+/**
+ * Parses relaxed JSON formats (trailing commas, single quotes, comments, JSONP callbacks)
+ */
+export function parseRelaxedJson(raw: string): any {
+  let cleaned = raw.replace(/^\uFEFF/, '').trim();
+
+  // Strip JSONP wrapper (e.g. netflixCallback({...}) or callback({...}))
+  const jsonpMatch = cleaned.match(/^[a-zA-Z_$][a-zA-Z0-9_$]*\s*\(\s*([\s\S]*)\s*\)\s*;?$/);
+  if (jsonpMatch && jsonpMatch[1]) {
+    cleaned = jsonpMatch[1].trim();
+  }
+
+  // Strip comments
+  cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\r\n]*/g, '$1');
+
+  // Try standard parse
+  try {
+    return JSON.parse(cleaned);
+  } catch (e1) {
+    let transformed = cleaned
+      .replace(/:\s*True\b/g, ': true')
+      .replace(/:\s*False\b/g, ': false')
+      .replace(/:\s*None\b/g, ': null')
+      .replace(/,\s*([\]}])/g, '$1');
+
+    try {
+      return JSON.parse(transformed);
+    } catch (e2) {
+      try {
+        const fn = new Function(`"use strict"; return (${transformed});`);
+        const res = fn();
+        if (res !== undefined) return res;
+      } catch (e3) {
+        throw e1;
+      }
+    }
+  }
+}
+
+/**
+ * Omnivorous parser for JSON, CSV, JSONP, or lenient JSON
+ */
+export function parseAnyInputToJson(
+  raw: string,
+  filename?: string
+): { data: any; format: 'json' | 'csv' | 'relaxed-json'; error?: string } {
+  const isCsvFile = filename && (filename.toLowerCase().endsWith('.csv') || filename.toLowerCase().endsWith('.tsv'));
+
+  if (isCsvFile) {
+    const csvData = parseCsvToJson(raw);
+    if (csvData) {
+      return { data: csvData, format: 'csv' };
+    }
+  }
+
+  // Try standard / relaxed JSON first
+  try {
+    const jsonData = parseRelaxedJson(raw);
+    return { data: jsonData, format: 'json' };
+  } catch (jsonErr: any) {
+    // Check if input is CSV format
+    const csvData = parseCsvToJson(raw);
+    if (csvData && csvData.length > 0) {
+      return { data: csvData, format: 'csv' };
+    }
+    return { data: null, format: 'json', error: jsonErr.message || 'Invalid JSON format' };
+  }
+}
+
+/**
  * Calculates graph node layout for JSON Crack style view
  */
 export function generateGraphLayout(
@@ -175,8 +311,9 @@ export function generateGraphLayout(
   const NODE_WIDTH = 260;
   const LEVEL_SPACING = 340;
   const NODE_GAP_Y = 24;
+  const MAX_ARRAY_ENTRIES_SHOWN = 30;
+  const MAX_TOTAL_GRAPH_NODES = 250;
 
-  let nodeCounter = 0;
   // Track Y position at each level column to stack nodes cleanly
   const levelYMap: { [level: number]: number } = {};
 
@@ -187,6 +324,10 @@ export function generateGraphLayout(
     level: number,
     parentPath?: string
   ): string {
+    if (nodes.length >= MAX_TOTAL_GRAPH_NODES) {
+      return path;
+    }
+
     const type = getNodeType(val);
     const nodeId = path;
 
@@ -208,7 +349,8 @@ export function generateGraphLayout(
         });
       });
     } else if (type === 'array' && Array.isArray(val)) {
-      val.forEach((item, idx) => {
+      const slice = val.slice(0, MAX_ARRAY_ENTRIES_SHOWN);
+      slice.forEach((item, idx) => {
         const iType = getNodeType(item);
         const childPath = `${path}[${idx}]`;
         const isExpandable = iType === 'object' || iType === 'array';
@@ -220,6 +362,15 @@ export function generateGraphLayout(
           isExpandable,
         });
       });
+
+      if (val.length > MAX_ARRAY_ENTRIES_SHOWN) {
+        entries.push({
+          key: `... +${val.length - MAX_ARRAY_ENTRIES_SHOWN} more items`,
+          value: 'Switch to Grid View for all records',
+          type: 'string',
+          isExpandable: false,
+        });
+      }
     } else {
       entries.push({
         key: 'value',
@@ -258,9 +409,9 @@ export function generateGraphLayout(
     nodes.push(graphNode);
 
     // If not collapsed, recurse into children
-    if (!isCollapsed) {
+    if (!isCollapsed && nodes.length < MAX_TOTAL_GRAPH_NODES) {
       entries.forEach((entry, idx) => {
-        if (entry.isExpandable && entry.targetNodeId) {
+        if (entry.isExpandable && entry.targetNodeId && nodes.length < MAX_TOTAL_GRAPH_NODES) {
           const childId = buildGraphNode(
             entry.value,
             entry.targetNodeId,
@@ -271,7 +422,7 @@ export function generateGraphLayout(
 
           // Find source connection y coordinate
           const sourceY = y + headerHeight + idx * entryHeight + entryHeight / 2;
-          const targetY = (levelYMap[level + 1] || 40) - height / 2; // rough target
+          const targetY = (levelYMap[level + 1] || 40) - height / 2;
 
           edges.push({
             id: `e-${nodeId}-${idx}-${childId}`,

@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 Developed by **Suhail Akhtar** ([suhail.top](https://suhail.top)).
 
+## [v1.1.0] - 2026-08-26
+
+### Added
+- **Netlify Deployment Configuration**: Added `netlify.toml`, `_redirects` SPA rewrite rules, and `.nvmrc` Node.js 20 environment specification to ensure static builds render properly on Netlify.
+- **Full-Screen Focus Mode**: Added header toggle and `Ctrl/Cmd + Shift + F` / `Esc` keyboard shortcuts to expand visualization workspace.
+- **Resilient Service Worker**: Added network-first navigation caching and background stale-while-revalidate asset caching in `sw.js`.
+- **Expanded Presets**: Added Netflix catalog and viewing history datasets with relaxed parser support.
+
 ## [v1.0.0] - 2026-08-26
 
 ### Added
