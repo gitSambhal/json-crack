@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { Copy, Code, Link as LinkIcon, Eye, FileJson, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
+import { Copy, Code, Link as LinkIcon, Eye, FileJson, ArrowDownAZ, ArrowUpZA, EyeOff, SlidersHorizontal } from 'lucide-react';
 import { copyToClipboard } from '../utils/export';
 import { SortMode } from '../utils/jsonParser';
 
@@ -22,6 +22,8 @@ interface ContextMenuProps {
   onSelectPath: (path: string) => void;
   onShowToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   onSortSubTree?: (path: string, mode: SortMode) => void;
+  onHideKey?: (key: string) => void;
+  onOpenPropertyFilter?: () => void;
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
@@ -30,6 +32,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onSelectPath,
   onShowToast,
   onSortSubTree,
+  onHideKey,
+  onOpenPropertyFilter,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -177,6 +181,37 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         <Eye className="w-3.5 h-3.5 text-purple-400" />
         <span>Inspect Node</span>
       </button>
+
+      {target.keyName && onHideKey && (
+        <>
+          <div className="my-1 border-t border-[#2A2A2E]" />
+          <button
+            onClick={() => {
+              if (target.keyName && onHideKey) {
+                onHideKey(target.keyName);
+              }
+              onClose();
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-amber-600/20 hover:text-amber-300 flex items-center gap-2 transition-colors cursor-pointer text-amber-400"
+          >
+            <EyeOff className="w-3.5 h-3.5" />
+            <span>Hide Property "{target.keyName}"</span>
+          </button>
+        </>
+      )}
+
+      {onOpenPropertyFilter && (
+        <button
+          onClick={() => {
+            onOpenPropertyFilter();
+            onClose();
+          }}
+          className="w-full text-left px-3 py-1.5 hover:bg-blue-600/20 hover:text-blue-300 flex items-center gap-2 transition-colors cursor-pointer text-gray-300"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" />
+          <span>Manage Property Visibility...</span>
+        </button>
+      )}
     </div>
   );
 };

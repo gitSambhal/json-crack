@@ -7,7 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { getNodeType } from '../utils/jsonParser';
 import { SearchResult } from '../types/json';
 import { copyToClipboard } from '../utils/export';
-import { ChevronDown, ChevronRight, Copy, Check, Maximize2, Minimize2, FileJson } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Check, Maximize2, Minimize2, FileJson, EyeOff, SlidersHorizontal } from 'lucide-react';
 import { ContextMenu, ContextMenuTarget } from '../components/ContextMenu';
 import { SortMode } from '../utils/jsonParser';
 
@@ -19,6 +19,8 @@ interface TreeViewProps {
   activeSearchQuery: string;
   onShowToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   onSortSubTree?: (path: string, mode: SortMode) => void;
+  onHideKey?: (key: string) => void;
+  onOpenPropertyFilter?: () => void;
 }
 
 interface TreeNodeProps {
@@ -35,6 +37,8 @@ interface TreeNodeProps {
   onToggleCollapse: (path: string) => void;
   onShowToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   onContextMenuTrigger: (target: ContextMenuTarget) => void;
+  onHideKey?: (key: string) => void;
+  onOpenPropertyFilter?: () => void;
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -51,6 +55,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onToggleCollapse,
   onShowToast,
   onContextMenuTrigger,
+  onHideKey,
+  onOpenPropertyFilter,
 }) => {
   const type = getNodeType(value);
   const isCollapsed = collapsedPaths.has(path);
@@ -177,6 +183,18 @@ const TreeNode: React.FC<TreeNodeProps> = ({
           {!isLast && <span className="text-[#6B6B72]">,</span>}
 
           <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto flex items-center gap-1">
+            {keyName !== undefined && onHideKey && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onHideKey(keyName);
+                }}
+                className="text-[#6B6B72] hover:text-amber-400 p-1 rounded hover:bg-[#2A2A2E] flex items-center gap-1 text-[11px]"
+                title={`Hide property "${keyName}" across document`}
+              >
+                <EyeOff className="w-3 h-3 text-amber-400/80" />
+              </button>
+            )}
             <button
               onClick={handleCopySubtree}
               className="text-[#6B6B72] hover:text-blue-400 p-1 rounded hover:bg-[#2A2A2E] flex items-center gap-1 text-[11px]"
@@ -224,6 +242,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                   onToggleCollapse={onToggleCollapse}
                   onShowToast={onShowToast}
                   onContextMenuTrigger={onContextMenuTrigger}
+                  onHideKey={onHideKey}
+                  onOpenPropertyFilter={onOpenPropertyFilter}
                 />
               );
             })}
@@ -279,6 +299,18 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       {!isLast && <span className="text-[#6B6B72]">,</span>}
 
       <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto flex items-center gap-1">
+        {keyName !== undefined && onHideKey && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onHideKey(keyName);
+            }}
+            className="text-[#6B6B72] hover:text-amber-400 p-1 rounded hover:bg-[#2A2A2E] flex items-center gap-1 text-[11px]"
+            title={`Hide property "${keyName}" across document`}
+          >
+            <EyeOff className="w-3 h-3 text-amber-400/80" />
+          </button>
+        )}
         <button
           onClick={handleCopySubtree}
           className="text-[#6B6B72] hover:text-blue-400 p-1 rounded hover:bg-[#2A2A2E] flex items-center gap-1 text-[11px]"
@@ -310,6 +342,8 @@ export const TreeView: React.FC<TreeViewProps> = ({
   activeSearchQuery,
   onShowToast,
   onSortSubTree,
+  onHideKey,
+  onOpenPropertyFilter,
 }) => {
   const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(new Set());
   const [contextMenuTarget, setContextMenuTarget] = useState<ContextMenuTarget | null>(null);
@@ -360,6 +394,8 @@ export const TreeView: React.FC<TreeViewProps> = ({
         onSelectPath={onSelectPath}
         onShowToast={onShowToast}
         onSortSubTree={onSortSubTree}
+        onHideKey={onHideKey}
+        onOpenPropertyFilter={onOpenPropertyFilter}
       />
 
       {/* Top Tree Controls Bar */}
@@ -368,16 +404,26 @@ export const TreeView: React.FC<TreeViewProps> = ({
           <span>Tree Controls:</span>
           <button
             onClick={handleExpandAll}
-            className="px-2 py-0.5 bg-[#1C1C1F] hover:bg-[#2A2A2E] text-white rounded text-[11px] font-semibold flex items-center gap-1"
+            className="px-2 py-0.5 bg-[#1C1C1F] hover:bg-[#2A2A2E] text-white rounded text-[11px] font-semibold flex items-center gap-1 transition-colors"
           >
             <Maximize2 className="w-3 h-3 text-blue-400" /> Expand All
           </button>
           <button
             onClick={handleCollapseAll}
-            className="px-2 py-0.5 bg-[#1C1C1F] hover:bg-[#2A2A2E] text-white rounded text-[11px] font-semibold flex items-center gap-1"
+            className="px-2 py-0.5 bg-[#1C1C1F] hover:bg-[#2A2A2E] text-white rounded text-[11px] font-semibold flex items-center gap-1 transition-colors"
           >
             <Minimize2 className="w-3 h-3 text-amber-400" /> Collapse All
           </button>
+
+          {onOpenPropertyFilter && (
+            <button
+              onClick={onOpenPropertyFilter}
+              className="px-2 py-0.5 bg-[#1C1C1F] hover:bg-[#2A2A2E] text-blue-300 rounded text-[11px] font-semibold flex items-center gap-1 transition-colors border border-blue-500/20"
+              title="Manage and filter property visibility with checkboxes"
+            >
+              <SlidersHorizontal className="w-3 h-3 text-blue-400" /> Filter Keys
+            </button>
+          )}
         </div>
 
         {activeSearchQuery && (
@@ -405,6 +451,8 @@ export const TreeView: React.FC<TreeViewProps> = ({
             onToggleCollapse={toggleCollapse}
             onShowToast={onShowToast}
             onContextMenuTrigger={setContextMenuTarget}
+            onHideKey={onHideKey}
+            onOpenPropertyFilter={onOpenPropertyFilter}
           />
         </div>
       </div>

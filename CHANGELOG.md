@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 Developed by **Suhail Akhtar** ([suhail.top](https://suhail.top)).
 
+## [v1.2.0] - 2026-08-26
+
+### Added
+- **Property Visibility & Noise Filtering**: Interactive modal and quick controls to hide/show specific JSON properties and keys across the document using checkboxes.
+- **Noise Presets**: 1-click presets to hide technical metadata, timestamps (`created_at`, `updated_at`), system IDs (`_id`, `id`, `uuid`), null values, empty strings, and empty objects/arrays.
+- **Inline Property Hiding**: Added `EyeOff` quick-hide buttons directly on TreeView lines, GraphView cards, TableView column headers, and right-click Context Menus.
+- **Active Filter Banner**: Persistent indicator showing how many properties are hidden with quick 1-click unhide/reset and filter management.
+- **Filtered JSON Export**: New export option allowing users to export pristine JSON documents with hidden properties pruned.
+
 ## [v1.1.0] - 2026-08-26
 
 ### Added

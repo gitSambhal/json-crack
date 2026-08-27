@@ -24,7 +24,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose 
               <Sparkles className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-sm uppercase tracking-wider">What's New in v1.0.0</h3>
+              <h3 className="font-bold text-white text-sm uppercase tracking-wider">What's New in v1.2.0</h3>
               <p className="text-[10px] text-[#6B6B72]">JSON Reader & Node Graph Visualizer</p>
             </div>
           </div>
@@ -41,50 +41,50 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose 
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 font-bold rounded text-[10px] uppercase border border-blue-500/30">
-                Release v1.0.0
+                Release v1.2.0
               </span>
               <span className="text-[#6B6B72] text-[10px]">August 2026</span>
             </div>
             <p className="text-gray-300 leading-relaxed text-xs">
-              Welcome to the inaugural release of the JSON Reader & Node Graph Visualizer, designed with Geometric Balance aesthetic for lightning-fast JSON exploration, interactive node diagramming, and deep filtering.
+              This update introduces comprehensive <strong>Property Visibility & Noise Filtering</strong> to declutter large JSON payloads by hiding unnecessary keys with intuitive checkboxes, noise presets, and inline toggles across Graph, Tree, and Table views.
             </p>
           </div>
 
           <div className="space-y-3">
             <h4 className="text-white font-bold uppercase tracking-wider text-[11px] flex items-center gap-2">
-              <Cpu className="w-3.5 h-3.5 text-blue-400" /> Major Capabilities
+              <Cpu className="w-3.5 h-3.5 text-blue-400" /> Key Features & Enhancements
             </h4>
 
             <ul className="space-y-2.5">
               <li className="flex items-start gap-2.5 bg-[#1C1C1F] p-3 rounded border border-[#2A2A2E]">
                 <Check className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-white block font-semibold mb-0.5">JSON Crack Style Node Graph</strong>
-                  <span className="text-[#9CA3AF] leading-normal">Interactive canvas with zoom, pan, and collapsible object/array nodes linked with smooth bezier connectors.</span>
+                  <strong className="text-white block font-semibold mb-0.5">Property Visibility Checkbox Modal</strong>
+                  <span className="text-[#9CA3AF] leading-normal">Easily select which keys to show or hide, with search, type tags, frequency counts, and sample values.</span>
                 </div>
               </li>
 
               <li className="flex items-start gap-2.5 bg-[#1C1C1F] p-3 rounded border border-[#2A2A2E]">
                 <Check className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-white block font-semibold mb-0.5">High Performance Tree & Syntax Colors</strong>
-                  <span className="text-[#9CA3AF] leading-normal">Formatted JSON tree view with color coding for strings, numbers, booleans, keys, and nulls with depth guides.</span>
+                  <strong className="text-white block font-semibold mb-0.5">Noise Reduction Presets</strong>
+                  <span className="text-[#9CA3AF] leading-normal">1-click presets to hide technical metadata, timestamps, IDs, null values, empty strings, and empty objects.</span>
                 </div>
               </li>
 
               <li className="flex items-start gap-2.5 bg-[#1C1C1F] p-3 rounded border border-[#2A2A2E]">
                 <Check className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-white block font-semibold mb-0.5">Search & Path Filter Engine</strong>
-                  <span className="text-[#9CA3AF] leading-normal">Filter large JSON structures by key, value, type, or JSONPath expression with step navigation.</span>
+                  <strong className="text-white block font-semibold mb-0.5">Inline Hide Toggles & Context Menus</strong>
+                  <span className="text-[#9CA3AF] leading-normal">Quick-hide keys with hover eye icons on Tree nodes, Graph cards, Table headers, and right-click menus.</span>
                 </div>
               </li>
 
               <li className="flex items-start gap-2.5 bg-[#1C1C1F] p-3 rounded border border-[#2A2A2E]">
                 <Check className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-white block font-semibold mb-0.5">Tabular Array Grid & Export</strong>
-                  <span className="text-[#9CA3AF] leading-normal">Instant tabular view for JSON object arrays with column sorting, search, and CSV / JSON export options.</span>
+                  <strong className="text-white block font-semibold mb-0.5">Filtered Export & Active Filter Banner</strong>
+                  <span className="text-[#9CA3AF] leading-normal">Export clean JSON payloads excluding hidden properties and monitor active filter rules with instant reset.</span>
                 </div>
               </li>
             </ul>

@@ -43,6 +43,14 @@ import { JsonPathModal } from './components/JsonPathModal';
 import { ProfilerModal } from './components/ProfilerModal';
 import { TransformModal } from './components/TransformModal';
 import { FetchUrlModal } from './components/FetchUrlModal';
+import { PropertyVisibilityModal } from './components/PropertyVisibilityModal';
+import { FilteredPropertiesBanner } from './components/FilteredPropertiesBanner';
+import {
+  PropertyFilterConfig,
+  DEFAULT_PROPERTY_FILTER,
+  filterJsonByProperties,
+  countActiveFilterRules,
+} from './utils/propertyFilter';
 
 import { GraphView } from './features/GraphView';
 import { TreeView } from './features/TreeView';
@@ -72,6 +80,8 @@ export default function App() {
   const [isProfilerModalOpen, setIsProfilerModalOpen] = useState(false);
   const [isTransformModalOpen, setIsTransformModalOpen] = useState(false);
   const [isFetchUrlModalOpen, setIsFetchUrlModalOpen] = useState(false);
+  const [isPropertyFilterModalOpen, setIsPropertyFilterModalOpen] = useState(false);
+  const [propertyFilter, setPropertyFilter] = useState<PropertyFilterConfig>(DEFAULT_PROPERTY_FILTER);
   const [isFocusMode, setIsFocusMode] = useState(false);
 
   // Update active file data
@@ -171,17 +181,51 @@ export default function App() {
     return files.find((f) => f.id === activeFileId) || files[0];
   }, [files, activeFileId]);
 
+  // Apply property visibility / noise filter to active file data
+  const filteredActiveData = useMemo(() => {
+    if (!activeFile || !activeFile.isValid || activeFile.data === null || activeFile.data === undefined) {
+      return activeFile?.data;
+    }
+    return filterJsonByProperties(activeFile.data, propertyFilter);
+  }, [activeFile, propertyFilter]);
+
+  // Quick hide key handler
+  const handleHideKey = (key: string) => {
+    setPropertyFilter((prev) => {
+      const nextKeys = new Set(prev.hiddenKeys);
+      nextKeys.add(key);
+      return { ...prev, hiddenKeys: nextKeys };
+    });
+    showToast(`Hidden property "${key}" from views`, 'info');
+  };
+
+  // Unhide key handler
+  const handleUnhideKey = (key: string) => {
+    setPropertyFilter((prev) => {
+      const nextKeys = new Set(prev.hiddenKeys);
+      nextKeys.delete(key);
+      return { ...prev, hiddenKeys: nextKeys };
+    });
+    showToast(`Unhid property "${key}"`, 'info');
+  };
+
+  // Reset property filter
+  const handleResetPropertyFilter = () => {
+    setPropertyFilter(DEFAULT_PROPERTY_FILTER);
+    showToast('Reset all property visibility filters', 'info');
+  };
+
   // Calculate stats for current active file data
   const stats = useMemo(() => {
     if (!activeFile || !activeFile.isValid || !activeFile.data) return null;
     return calculateStats(activeFile.data, activeFile.byteSize);
   }, [activeFile]);
 
-  // Run search engine
+  // Run search engine (using filtered data if any keys hidden)
   const searchResults = useMemo(() => {
-    if (!activeFile || !activeFile.isValid || !activeFile.data) return [];
-    return searchJson(activeFile.data, searchFilter);
-  }, [activeFile, searchFilter]);
+    if (!filteredActiveData) return [];
+    return searchJson(filteredActiveData, searchFilter);
+  }, [filteredActiveData, searchFilter]);
 
   // Handle file import upload (supports single or multiple files)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -520,7 +564,7 @@ export default function App() {
   };
 
   // Handle export
-  const handleExport = (type: 'json' | 'minified' | 'csv') => {
+  const handleExport = (type: 'json' | 'minified' | 'csv' | 'filtered') => {
     if (!activeFile) return;
 
     if (type === 'json') {
@@ -530,6 +574,14 @@ export default function App() {
         'application/json'
       );
       showToast('Exported formatted JSON', 'success');
+    } else if (type === 'filtered') {
+      const baseName = activeFile.name.replace('.json', '');
+      downloadFile(
+        `${baseName}.filtered.json`,
+        JSON.stringify(filteredActiveData, null, 2),
+        'application/json'
+      );
+      showToast('Exported filtered JSON (excluding hidden properties)', 'success');
     } else if (type === 'minified') {
       const baseName = activeFile.name.replace('.json', '');
       downloadFile(
@@ -582,6 +634,8 @@ export default function App() {
         onOpenProfilerModal={() => setIsProfilerModalOpen(true)}
         onOpenTransformModal={() => setIsTransformModalOpen(true)}
         onOpenFetchUrlModal={() => setIsFetchUrlModalOpen(true)}
+        onOpenPropertyFilter={() => setIsPropertyFilterModalOpen(true)}
+        hiddenPropertiesCount={countActiveFilterRules(propertyFilter)}
         isFocusMode={isFocusMode}
         onToggleFocusMode={() => setIsFocusMode((prev) => !prev)}
       />
@@ -674,6 +728,14 @@ export default function App() {
             onOpenPasteModal={() => setIsPasteModalOpen(true)}
           />
 
+          {/* Property Visibility Filter Status Banner */}
+          <FilteredPropertiesBanner
+            propertyFilter={propertyFilter}
+            onOpenModal={() => setIsPropertyFilterModalOpen(true)}
+            onUnhideKey={handleUnhideKey}
+            onResetFilter={handleResetPropertyFilter}
+          />
+
           {!activeFile.isValid ? (
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
               <AlertCircle className="w-12 h-12 text-red-400 mb-3" />
@@ -690,23 +752,27 @@ export default function App() {
             </div>
           ) : viewMode === 'graph' ? (
             <GraphView
-              data={activeFile.data}
+              data={filteredActiveData}
               selectedPath={selectedPath}
               onSelectPath={setSelectedPath}
               searchResults={searchResults}
               activeSearchQuery={searchFilter.query}
               onShowToast={showToast}
               onSortSubTree={handleSortSubTree}
+              onHideKey={handleHideKey}
+              onOpenPropertyFilter={() => setIsPropertyFilterModalOpen(true)}
             />
           ) : viewMode === 'tree' ? (
             <TreeView
-              data={activeFile.data}
+              data={filteredActiveData}
               selectedPath={selectedPath}
               onSelectPath={setSelectedPath}
               searchResults={searchResults}
               activeSearchQuery={searchFilter.query}
               onShowToast={showToast}
               onSortSubTree={handleSortSubTree}
+              onHideKey={handleHideKey}
+              onOpenPropertyFilter={() => setIsPropertyFilterModalOpen(true)}
             />
           ) : viewMode === 'code' ? (
             <CodeView
@@ -715,7 +781,12 @@ export default function App() {
               onShowToast={showToast}
             />
           ) : (
-            <TableView data={activeFile.data} onShowToast={showToast} />
+            <TableView
+              data={filteredActiveData}
+              onShowToast={showToast}
+              onHideKey={handleHideKey}
+              onOpenPropertyFilter={() => setIsPropertyFilterModalOpen(true)}
+            />
           )}
 
           {/* Floating Focus Mode indicator */}
@@ -827,6 +898,15 @@ export default function App() {
         isOpen={isFetchUrlModalOpen}
         onClose={() => setIsFetchUrlModalOpen(false)}
         onLoadRemoteJson={handleLoadRemoteJson}
+        onShowToast={showToast}
+      />
+
+      <PropertyVisibilityModal
+        isOpen={isPropertyFilterModalOpen}
+        onClose={() => setIsPropertyFilterModalOpen(false)}
+        data={activeFile.data}
+        propertyFilter={propertyFilter}
+        onUpdateFilter={setPropertyFilter}
         onShowToast={showToast}
       />
     </div>

@@ -1,7 +1,7 @@
 {
   "name": "json-reader-visualizer",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Production-grade JSON viewer, interactive node graph visualizer, schema generator, data profiler, and tabular grid editor.",
   "author": "Suhail Akhtar (https://suhail.top)",
   "homepage": "https://suhail.top",

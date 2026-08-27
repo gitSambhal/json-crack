@@ -18,7 +18,9 @@ import {
   Sparkles,
   Move,
   Layers,
-  FileJson
+  FileJson,
+  EyeOff,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 interface GraphViewProps {
@@ -29,6 +31,8 @@ interface GraphViewProps {
   activeSearchQuery: string;
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
   onSortSubTree?: (path: string, mode: SortMode) => void;
+  onHideKey?: (key: string) => void;
+  onOpenPropertyFilter?: () => void;
 }
 
 export const GraphView: React.FC<GraphViewProps> = ({
@@ -39,6 +43,8 @@ export const GraphView: React.FC<GraphViewProps> = ({
   activeSearchQuery,
   onShowToast,
   onSortSubTree,
+  onHideKey,
+  onOpenPropertyFilter,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -151,6 +157,8 @@ export const GraphView: React.FC<GraphViewProps> = ({
         onSelectPath={onSelectPath}
         onShowToast={onShowToast || (() => {})}
         onSortSubTree={onSortSubTree}
+        onHideKey={onHideKey}
+        onOpenPropertyFilter={onOpenPropertyFilter}
       />
 
       {/* Background dot grid pattern */}
@@ -357,17 +365,32 @@ export const GraphView: React.FC<GraphViewProps> = ({
                           </span>
                           <span className="text-[#6B6B72]">:</span>
 
-                          {entry.isExpandable ? (
-                            <span className="text-[#6B6B72] text-[10px] font-semibold bg-[#1C1C1F] px-1.5 py-0.5 rounded">
-                              {entryType === 'object'
-                                ? `{ ${Object.keys(entry.value || {}).length} keys }`
-                                : `[ ${Array.isArray(entry.value) ? entry.value.length : 0} items ]`}
-                            </span>
-                          ) : (
-                            <span className={`truncate max-w-[110px] ${valColor}`} title={String(entry.value)}>
-                              {entryType === 'string' ? `"${entry.value}"` : String(entry.value)}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                            {entry.isExpandable ? (
+                              <span className="text-[#6B6B72] text-[10px] font-semibold bg-[#1C1C1F] px-1.5 py-0.5 rounded">
+                                {entryType === 'object'
+                                  ? `{ ${Object.keys(entry.value || {}).length} keys }`
+                                  : `[ ${Array.isArray(entry.value) ? entry.value.length : 0} items ]`}
+                              </span>
+                            ) : (
+                              <span className={`truncate max-w-[110px] ${valColor}`} title={String(entry.value)}>
+                                {entryType === 'string' ? `"${entry.value}"` : String(entry.value)}
+                              </span>
+                            )}
+
+                            {onHideKey && !entry.key.startsWith('[') && !entry.key.startsWith('...') && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onHideKey(entry.key);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 text-[#6B6B72] hover:text-amber-400 p-0.5 rounded transition-all"
+                                title={`Hide property "${entry.key}"`}
+                              >
+                                <EyeOff className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       );
                     })
@@ -381,6 +404,16 @@ export const GraphView: React.FC<GraphViewProps> = ({
 
       {/* Zoom & Floating controls */}
       <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-20 font-mono">
+        {onOpenPropertyFilter && (
+          <button
+            onClick={onOpenPropertyFilter}
+            className="w-10 h-10 bg-[#1C1C1F] border border-[#2A2A2E] rounded-full flex items-center justify-center text-blue-400 hover:border-blue-500 hover:text-blue-300 transition-colors shadow-2xl"
+            title="Filter & Hide Properties"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+          </button>
+        )}
+
         <button
           onClick={() => setZoom((prev) => Math.min(2.5, prev + 0.15))}
           className="w-10 h-10 bg-[#1C1C1F] border border-[#2A2A2E] rounded-full flex items-center justify-center text-white hover:border-blue-500 transition-colors shadow-2xl"

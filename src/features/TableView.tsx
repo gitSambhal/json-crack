@@ -7,14 +7,16 @@
 import React, { useState, useMemo } from 'react';
 import { extractTableData } from '../utils/dataProfiler';
 import { downloadFile, jsonToCsv } from '../utils/export';
-import { Search, ArrowUpDown, Download, Table as TableIcon, Layers, FileJson } from 'lucide-react';
+import { Search, ArrowUpDown, Download, Table as TableIcon, Layers, FileJson, EyeOff, SlidersHorizontal } from 'lucide-react';
 
 interface TableViewProps {
   data: any;
   onShowToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  onHideKey?: (key: string) => void;
+  onOpenPropertyFilter?: () => void;
 }
 
-export const TableView: React.FC<TableViewProps> = ({ data, onShowToast }) => {
+export const TableView: React.FC<TableViewProps> = ({ data, onShowToast, onHideKey, onOpenPropertyFilter }) => {
   const { columns, rows } = useMemo(() => extractTableData(data), [data]);
   const [searchFilter, setSearchFilter] = useState('');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -117,6 +119,16 @@ export const TableView: React.FC<TableViewProps> = ({ data, onShowToast }) => {
             Showing <strong className="text-white">{sortedRows.length}</strong> rows ({columns.length} columns)
           </span>
 
+          {onOpenPropertyFilter && (
+            <button
+              onClick={onOpenPropertyFilter}
+              className="px-2.5 py-1 bg-[#1F1F24] hover:bg-[#2A2A2E] text-blue-300 border border-blue-500/20 font-semibold rounded text-[11px] flex items-center gap-1.5 transition-all"
+              title="Show or hide columns / properties"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" /> Filter Columns
+            </button>
+          )}
+
           <button
             onClick={handleExportCsv}
             className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded text-[11px] flex items-center gap-1.5 shadow-sm transition-all"
@@ -135,11 +147,25 @@ export const TableView: React.FC<TableViewProps> = ({ data, onShowToast }) => {
                 <th
                   key={col}
                   onClick={() => handleSort(col)}
-                  className="px-3 py-2 border-r border-[#2A2A2E] hover:bg-[#2A2A2E] cursor-pointer transition-colors"
+                  className="px-3 py-2 border-r border-[#2A2A2E] hover:bg-[#2A2A2E] cursor-pointer transition-colors group"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate max-w-[150px]">{col}</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#6B6B72]" />
+                    <div className="flex items-center gap-1">
+                      {onHideKey && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onHideKey(col);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-[#6B6B72] hover:text-amber-400 p-0.5 rounded transition-all"
+                          title={`Hide column "${col}"`}
+                        >
+                          <EyeOff className="w-3 h-3" />
+                        </button>
+                      )}
+                      <ArrowUpDown className="w-3 h-3 text-[#6B6B72]" />
+                    </div>
                   </div>
                 </th>
               ))}

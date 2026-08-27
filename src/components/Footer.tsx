@@ -64,9 +64,9 @@ export const Footer: React.FC<FooterProps> = ({
         <button
           onClick={onOpenChangelog}
           className="hover:text-white transition-colors cursor-pointer text-blue-400 bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-500/30"
-          title="Click to view v1.0.0 Changelog"
+          title="Click to view v1.2.0 Changelog"
         >
-          v1.0.0
+          v1.2.0
         </button>
       </div>
     </footer>

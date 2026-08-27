@@ -42,7 +42,7 @@ interface HeaderProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onImportClick: () => void;
-  onExportClick: (type: 'json' | 'minified' | 'csv') => void;
+  onExportClick: (type: 'json' | 'minified' | 'csv' | 'filtered') => void;
   onOpenPasteModal: () => void;
   onOpenChangelog: () => void;
   onSortJson?: (mode: SortMode) => void;
@@ -55,6 +55,8 @@ interface HeaderProps {
   onOpenProfilerModal?: () => void;
   onOpenTransformModal?: () => void;
   onOpenFetchUrlModal?: () => void;
+  onOpenPropertyFilter?: () => void;
+  hiddenPropertiesCount?: number;
   isFocusMode?: boolean;
   onToggleFocusMode?: () => void;
 }
@@ -78,6 +80,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenProfilerModal,
   onOpenTransformModal,
   onOpenFetchUrlModal,
+  onOpenPropertyFilter,
+  hiddenPropertiesCount = 0,
   isFocusMode,
   onToggleFocusMode,
 }) => {
@@ -98,9 +102,9 @@ export const Header: React.FC<HeaderProps> = ({
           <span
             onClick={onOpenChangelog}
             className="px-1.5 py-0.5 bg-[#1C1C1F] hover:bg-[#2A2A2E] border border-[#2A2A2E] text-[10px] text-blue-400 font-bold rounded cursor-pointer transition-colors"
-            title="View Changelog (v1.0.0)"
+            title="View Changelog (v1.2.0)"
           >
-            v1.0.0
+            v1.2.0
           </span>
         </div>
       </div>
@@ -356,9 +360,50 @@ export const Header: React.FC<HeaderProps> = ({
                   <span>Fetch Remote API Endpoint</span>
                 </button>
               )}
+
+              {onOpenPropertyFilter && (
+                <button
+                  onClick={() => {
+                    onOpenPropertyFilter();
+                    setShowToolsMenu(false);
+                  }}
+                  className="w-full text-left px-2.5 py-1.5 hover:bg-[#1C1C1F] hover:text-amber-300 text-gray-200 rounded flex items-center justify-between border-t border-[#2A2A2E] mt-1 pt-1.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Hide / Filter Properties</span>
+                  </div>
+                  {hiddenPropertiesCount > 0 && (
+                    <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-1.5 py-0.2 rounded font-bold">
+                      {hiddenPropertiesCount} hidden
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
           )}
         </div>
+
+        {/* Property Visibility Filter Button */}
+        {onOpenPropertyFilter && (
+          <button
+            onClick={onOpenPropertyFilter}
+            className={`px-3 py-1.5 text-xs font-semibold rounded uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
+              hiddenPropertiesCount > 0
+                ? 'bg-amber-950/40 hover:bg-amber-950/60 text-amber-300 border-amber-500/50 shadow-md shadow-amber-500/10 ring-1 ring-amber-500/30'
+                : 'bg-[#1C1C1F] hover:bg-[#2A2A2E] text-gray-200 border-[#2A2A2E]'
+            }`}
+            title="Filter and toggle visibility of JSON properties, keys, nulls, and empty values"
+          >
+            <SlidersHorizontal className={`w-3.5 h-3.5 ${hiddenPropertiesCount > 0 ? 'text-amber-400 animate-pulse' : 'text-blue-400'}`} />
+            <span className="hidden md:inline">Properties</span>
+            {hiddenPropertiesCount > 0 && (
+              <span className="bg-amber-500 text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                {hiddenPropertiesCount}
+              </span>
+            )}
+          </button>
+        )}
 
         {/* Sort JSON Dropdown */}
         {onSortJson && (
@@ -479,6 +524,20 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <span>Formatted JSON (.json)</span>
               </button>
+
+              {hiddenPropertiesCount > 0 && (
+                <button
+                  onClick={() => {
+                    onExportClick('filtered');
+                    setShowExportMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-[#1C1C1F] text-amber-300 rounded flex items-center justify-between font-semibold"
+                >
+                  <span>Filtered JSON (No hidden)</span>
+                  <span className="text-[10px] bg-amber-500/20 px-1 rounded text-amber-400">Clean</span>
+                </button>
+              )}
+
               <button
                 onClick={() => {
                   onExportClick('minified');
